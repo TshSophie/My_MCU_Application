@@ -1,6 +1,8 @@
 ## 项目封面
 
-![](D:/MyDocument/技术博客/我的blog/项目介绍/images/C51_1.png)
+![](cover.png)
+
+
 
 
 
