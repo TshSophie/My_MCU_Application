@@ -1,0 +1,332 @@
+C51 COMPILER V9.01   TEST                                                                  07/04/2018 11:12:40 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE TEST
+OBJECT MODULE PLACED IN test.OBJ
+COMPILER INVOKED BY: C:\Keil_c51\C51\BIN\C51.EXE test.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1           
+   2          #include<reg51.h>
+   3          
+   4          #define uchar unsigned char
+   5          
+   6          sbit dula=P2^6; //ÉêÃ÷U1Ëø´æÆ÷µÄËø´æ¶Ë
+   7          sbit wela=P2^7;  //ÉêÃ÷U2Ëø´æÆ÷µÄËø´æ¶Ë
+   8          //j¡¢kÓÃÓÚÉùÃ÷ÑÓÊ±±äÁ¿
+   9          //c1¡¢c0·Ö±ðÓÃÓÚ´æ´¢ÏÔÊ¾¸öÎ»ºÍÊ®Î»µÄÖµ
+  10          unsigned char j,k,c1,c0,m,n=255;
+  11          unsigned char pp;
+  12          unsigned char code table[]={0xc0,0xf9,0xa4,0xb0,//0~3
+  13          0x99,0x92,0x82,0xf8,//4~7
+  14          0x80,0x90,0x88,0x83,//8~b
+  15          0xc6,0xa1,0x86,0x8e //c~f
+  16          };
+  17          
+  18          void delay(unsigned char i)
+  19          {
+  20   1        for(j=i;j>0;j--)
+  21   1          for(k=125;k>0;k--);
+  22   1      }
+  23          
+  24          //a£ºÏÔÊ¾Ê®Î»
+  25          //b: ÏÔÊ¾¸öÎ»
+  26          void display(uchar a,uchar b)
+  27          {
+  28   1         //ÏÔÊ¾¸öÎ»
+  29   1         dula=1;
+  30   1         P0=table[a];
+  31   1         delay(5);   
+  32   1         dula=0;
+  33   1         wela=1;
+  34   1         P0=0xfe;
+  35   1         wela=0;
+  36   1        // delay(10);
+  37   1        //ÏÔÊ¾Ê®Î»,²»ÄÜ¸ÉÈÅ¸öÎ»£¬
+  38   1        //ËùÒÔÖ»¿ªÆôÊ®Î»µÄÏÔÊ¾,½«½«¶ÎÑ¡Ëø¶¨£¬Î»Ñ¡´ò¿ª
+  39   1           dula=1;
+  40   1               P0=table[b];
+  41   1               delay(5);      
+  42   1           dula=0;
+  43   1           //¿ªÆôÎ»Ñ¡ 
+  44   1           wela=1;
+  45   1           P0=0xfd;
+  46   1           wela=0;
+  47   1           //delay(10);
+  48   1      }
+  49          
+  50          //ÏÔÊ¾¾ØÕó¼üÅÌ°´ÏÂµÄÖµ
+  51          void displayKeyNum(uchar num)
+  52          {                       
+  53   1         P0=table[num];
+  54   1         dula=1;
+  55   1         dula=0;
+C51 COMPILER V9.01   TEST                                                                  07/04/2018 11:12:40 PAGE 2   
+
+  56   1      }
+  57          
+  58          
+  59          //¾ØÕó¼üÅÌÉ¨Ãè
+  60          void matrixkeyscan()
+  61          {
+  62   1          uchar temp,key;
+  63   1              P3=0xfe;   //É¨ÃèµÚÒ»ÐÐ°´¼ü
+  64   1              temp=P3;
+  65   1              temp=temp&0xf0;          //ÅÐ¶Ïtemp¸ß4Î»ÊÇ·ñÓÐ0£¬Èç¹ûtempµÄ¸ß4Î»ÓÐ0ÄÇÃ´  tempµÄ¸ß4Î»Êý¾ÝÊµ¼ÊÉÏ¾ÍÊÇ¾ØÕó¼üÅÌµÄ4¸öÁ
+             -ÐÏß
+  66   1              if(temp==0xf0)
+  67   1              {
+  68   2               delay(10);
+  69   2               temp=P3;
+  70   2               temp=temp&0xf0;
+  71   2                if(temp!=0xf0)
+  72   2                {
+  73   3                       temp=P3;
+  74   3                       switch(temp)
+  75   3                       {
+  76   4                              case 0xee:
+  77   4                              key=0;
+  78   4                              break;
+  79   4      
+  80   4                              case 0xde:
+  81   4                              key=1;
+  82   4                              break;
+  83   4      
+  84   4                              case 0xbe:
+  85   4                              key=2;
+  86   4                              break;
+  87   4      
+  88   4                              case 0x7e:
+  89   4                              key=3;
+  90   4                              break;
+  91   4                       }
+  92   3      
+  93   3                      while(temp!=0xf0)
+  94   3                      {
+  95   4                        temp=P3;
+  96   4                        temp=temp&0xf0;               
+  97   4                      }
+  98   3                      c0=key%10;                //È¡³öµ±Ç°ÃèÊöµÄ¸öÎ»ÓëÊ®Î»
+  99   3                      c1=key/10;
+ 100   3                      display(c1,c0);    //ÏÔÊ¾
+ 101   3                      //displayKeyNum(key);
+ 102   3                }
+ 103   2              
+ 104   2              }
+ 105   1              P3=0xfd;   //É¨ÃèµÚ¶þÐÐ°´¼ü
+ 106   1              temp=P3;
+ 107   1              temp=temp&0xf0;          //ÅÐ¶Ïtemp¸ß4Î»ÊÇ·ñÓÐ0£¬Èç¹ûtempµÄ¸ß4Î»ÓÐ0ÄÇÃ´  tempµÄ¸ß4Î»Êý¾ÝÊµ¼ÊÉÏ¾ÍÊÇ¾ØÕó¼üÅÌµÄ4¸öÁ
+             -ÐÏß
+ 108   1              if(temp==0xf0)
+ 109   1              {
+ 110   2               delay(10);
+ 111   2               temp=P3;
+ 112   2               temp=temp&0xf0;
+ 113   2                if(temp!=0xf0)
+ 114   2                {
+ 115   3                       temp=P3;
+C51 COMPILER V9.01   TEST                                                                  07/04/2018 11:12:40 PAGE 3   
+
+ 116   3                       switch(temp)
+ 117   3                       {
+ 118   4                              case 0xed:
+ 119   4                              key=4;
+ 120   4                              break;
+ 121   4      
+ 122   4                              case 0xdd:
+ 123   4                              key=5;
+ 124   4                              break;
+ 125   4      
+ 126   4                              case 0xbd:
+ 127   4                              key=6;
+ 128   4                              break;
+ 129   4      
+ 130   4                              case 0x7d:
+ 131   4                              key=7;
+ 132   4                              break;
+ 133   4                       }
+ 134   3      
+ 135   3                      while(temp!=0xf0)
+ 136   3                      {
+ 137   4                        temp=P3;
+ 138   4                        temp=temp&0xf0;               
+ 139   4                      }
+ 140   3                      c0=key%10;                //È¡³öµ±Ç°ÃèÊöµÄ¸öÎ»ÓëÊ®Î»
+ 141   3                      c1=key/10;
+ 142   3                      display(c1,c0);    //ÏÔÊ¾
+ 143   3                      //displayKeyNum(key);
+ 144   3                }
+ 145   2              
+ 146   2              }
+ 147   1      
+ 148   1              P3=0xfb;   //É¨ÃèµÚÈýÐÐ°´¼ü
+ 149   1              temp=P3;
+ 150   1              temp=temp&0xf0;          //ÅÐ¶Ïtemp¸ß4Î»ÊÇ·ñÓÐ0£¬Èç¹ûtempµÄ¸ß4Î»ÓÐ0ÄÇÃ´  tempµÄ¸ß4Î»Êý¾ÝÊµ¼ÊÉÏ¾ÍÊÇ¾ØÕó¼üÅÌµÄ4¸öÁ
+             -ÐÏß
+ 151   1              if(temp==0xf0)
+ 152   1              {
+ 153   2               delay(10);
+ 154   2               temp=P3;
+ 155   2               temp=temp&0xf0;
+ 156   2                if(temp!=0xf0)
+ 157   2                {
+ 158   3                       temp=P3;
+ 159   3                       switch(temp)
+ 160   3                       {
+ 161   4                              case 0xeb:
+ 162   4                              key=8;
+ 163   4                              break;
+ 164   4      
+ 165   4                              case 0xdb:
+ 166   4                              key=19;
+ 167   4                              break;
+ 168   4      
+ 169   4                              case 0xbb:
+ 170   4                              key=10;
+ 171   4                              break;
+ 172   4      
+ 173   4                              case 0x7b:
+ 174   4                              key=11;
+ 175   4                              break;
+ 176   4                       }
+C51 COMPILER V9.01   TEST                                                                  07/04/2018 11:12:40 PAGE 4   
+
+ 177   3      
+ 178   3                      while(temp!=0xf0)
+ 179   3                      {
+ 180   4                        temp=P3;
+ 181   4                        temp=temp&0xf0;               
+ 182   4                      }
+ 183   3                      c0=key%10;                //È¡³öµ±Ç°ÃèÊöµÄ¸öÎ»ÓëÊ®Î»
+ 184   3                      c1=key/10;
+ 185   3                      display(c1,c0);    //ÏÔÊ¾
+ 186   3                      //displayKeyNum(key);
+ 187   3                }
+ 188   2              
+ 189   2              }
+ 190   1              P3=0xf7;   //É¨ÃèµÚËÄÐÐ°´¼ü
+ 191   1              temp=P3;
+ 192   1              temp=temp&0xf0;          //ÅÐ¶Ïtemp¸ß4Î»ÊÇ·ñÓÐ0£¬Èç¹ûtempµÄ¸ß4Î»ÓÐ0ÄÇÃ´  tempµÄ¸ß4Î»Êý¾ÝÊµ¼ÊÉÏ¾ÍÊÇ¾ØÕó¼üÅÌµÄ4¸öÁ
+             -ÐÏß
+ 193   1              if(temp==0xf0)
+ 194   1              {
+ 195   2               delay(10);
+ 196   2               temp=P3;
+ 197   2               temp=temp&0xf0;
+ 198   2                if(temp!=0xf0)
+ 199   2                {
+ 200   3                       temp=P3;
+ 201   3                       switch(temp)
+ 202   3                       {
+ 203   4                              case 0xe7:
+ 204   4                              key=12;
+ 205   4                              break;
+ 206   4      
+ 207   4                              case 0xd7:
+ 208   4                              key=13;
+ 209   4                              break;
+ 210   4      
+ 211   4                              case 0xb7:
+ 212   4                              key=14;
+ 213   4                              break;
+ 214   4      
+ 215   4                              case 0x77:
+ 216   4                              key=15;
+ 217   4                              break;
+ 218   4                       }
+ 219   3      
+ 220   3                      while(temp!=0xf0)
+ 221   3                      {
+ 222   4                        temp=P3;
+ 223   4                        temp=temp&0xf0;               
+ 224   4                      }
+ 225   3                      c0=key%10;                //È¡³öµ±Ç°ÃèÊöµÄ¸öÎ»ÓëÊ®Î»
+ 226   3                      c1=key/10;
+ 227   3                      display(c1,c0);    //ÏÔÊ¾
+ 228   3                      //displayKeyNum(key);
+ 229   3                }
+ 230   2              
+ 231   2              }
+ 232   1      
+ 233   1      }
+ 234          
+ 235          
+ 236           //ÊµÏÖ60Ãë¼ÆÊ±
+ 237          void main0()
+C51 COMPILER V9.01   TEST                                                                  07/04/2018 11:12:40 PAGE 5   
+
+ 238          {
+ 239   1              TMOD=0x01;               //Ä£Ê½ÉèÖÃ£¬00000001£¬¿É¼û²ÉÓÃµÄÊÇ¶¨Ê±Æ÷0£¬¹¤×÷ÓëÄ£Ê½1£¨M1=0£¬M0=1£©¡£
+ 240   1              TR0=1;                   //´ò¿ª¶¨Ê±Æ÷
+ 241   1              TH0=(65536-46080)/256;// ÓÉÓÚ¾§ÕñÎª11.0592,¹ÊËù¼Ç´ÎÊýÓ¦Îª46080£¬¼ÆÊ±Æ÷Ã¿¸ô50000Î¢Ãë·¢ÆðÒ»´ÎÖÐ¶Ï¡£
+ 242   1              TL0=(65536-46080)%256;//46080µÄÀ´Àú£¬Îª50000*11.0592/12
+ 243   1              ET0=1;                   //¿ª¶¨Ê±Æ÷0ÖÐ¶Ï
+ 244   1              EA=1;                    //¿ª×ÜÖÐ¶Ï
+ 245   1              while(1)
+ 246   1              {
+ 247   2                      //1ÃëÖÓ¹ýÈ¥
+ 248   2                      if(pp==20)
+ 249   2                      {
+ 250   3                         //½«¼ÇÂ¼1ÃëÊÇ·ñµ½µÄ±äÁ¿¹éÁã
+ 251   3                              pp=0;
+ 252   3                              //ÃëÊý¼Ó1
+ 253   3                              m++;
+ 254   3                              n--;
+ 255   3                              P1=n;//ÉÁË¸µÆ
+ 256   3                              if(m==60)
+ 257   3                              {
+ 258   4                                      m=0;       //Èôµ½ÁË60s£¬Ôò¹éÁã
+ 259   4                              }
+ 260   3                      }
+ 261   2                      c0=m%10;                  //È¡³öµ±Ç°ÃèÊöµÄ¸öÎ»ÓëÊ®Î»
+ 262   2                      c1=m/10;
+ 263   2                      display(c1,c0);    //ÏÔÊ¾
+ 264   2              }
+ 265   1      }
+ 266          
+ 267           //ÊµÏÖ¾ØÕó¼üÅÌÉ¨Ãè
+ 268           void main1()
+ 269           {
+ 270   1      
+ 271   1              while(1)
+ 272   1              {
+ 273   2              matrixkeyscan();
+ 274   2              }
+ 275   1       
+ 276   1       }
+ 277          
+ 278          
+ 279          //Á÷Ë®µÆ
+ 280          void main()
+ 281          {
+ 282   1              unsigned char m=255;
+ 283   1              while(1)
+ 284   1              {
+ 285   2                      P1=m;
+ 286   2                      delay(2000);
+ 287   2                      m--;
+ 288   2              }
+ 289   1      }
+ 290          
+ 291          void time0() interrupt 1
+ 292          {TH0=(65536-46080)/256;
+ 293   1              TL0=(65536-46080)%256;
+ 294   1              pp++;
+ 295   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    529    ----
+C51 COMPILER V9.01   TEST                                                                  07/04/2018 11:12:40 PAGE 6   
+
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
