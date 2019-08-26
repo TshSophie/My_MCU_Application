@@ -1,0 +1,241 @@
+C51 COMPILER V9.01   TIME01                                                                06/19/2019 12:17:55 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE TIME01
+OBJECT MODULE PLACED IN time01.OBJ
+COMPILER INVOKED BY: C:\Keil_c51\C51\BIN\C51.EXE time01.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include  <reg51.h>
+   2          #include <intrins.h>
+   3          #define  uchar  unsigned  char
+   4          sbit  RS=P1^7;
+   5          sbit  RW=P1^6;
+   6          sbit  E=P1^5;
+   7          
+   8          
+   9          sbit PIN_LED = P1^1; // 呼吸灯
+  10          sbit PIN_CLEAR = P3^4; // 清零
+  11          sbit PIN_BEE_BTN = P3^5; // 蜂鸣器按钮
+  12          sbit PIN_BEE = P1^0;
+  13          
+  14          void  init(void);
+  15          void  wc51r(uchar  i);
+  16          void  wc51ddr(uchar  i);
+  17          void  fbusy(void);
+  18          void showText(char *str);
+  19          void switchAndshow(int num);
+  20          void delay();
+  21          
+  22          
+  23          int num = 0; // 统计计时次数
+  24          
+  25          int minutes = 0; // 分钟
+  26          int seconds = 0; // 秒种
+  27          int percent_second = 0; // 百分秒
+  28          
+  29          int flag = 0;   // led信号灯
+  30          char * status_text[] = {"WAIT ","START","PAUSE","CLEAR"}; // 提示状态信息
+  31          int status = 0;  // 状态代号
+  32          
+  33          char * sound_text[] = {"OFF","ON "}; // 声音提示状态信息
+  34          int sound = 0; // 是否开启声音,默认开启
+  35          
+  36          void timer_init()
+  37          {
+  38   1              TMOD=0x90;                              //设置定时器1工作方式1
+  39   1              TH1=(65536-9216)/256;       //装初值,10毫秒   10000*11.0592/12  = 9216
+  40   1              TL1=(65536-9216)%256;
+  41   1      
+  42   1              EA=1;    //开总中断
+  43   1              EX0 = 1; // 外部中断0   
+  44   1              IT0 = 1; // 外部中断0，下降沿触发
+  45   1              EX1 = 1; // 外部中断1   
+  46   1              IT1 = 1; // 外部中断1，下降沿触发
+  47   1      
+  48   1              ET1=1;    //开定时器1中断       
+  49   1              TR1=0;    //关闭/启动定时器1    
+  50   1      }
+  51          
+  52          
+  53          //初始化函数
+  54          void init()
+  55          {
+C51 COMPILER V9.01   TIME01                                                                06/19/2019 12:17:55 PAGE 2   
+
+  56   1              wc51r(0x01);            //清屏
+  57   1              wc51r(0x38);            //使用8位数据,显示两行,使用5×7的字型
+  58   1              wc51r(0x0c);            //显示器开,光标关,字符不闪烁
+  59   1              wc51r(0x06);            //字符不动,光标自动右移一格
+  60   1      }
+  61          
+  62          
+  63          //主函数
+  64          void  main()
+  65          {                 
+  66   1              SP=0x50;
+  67   1              init();
+  68   1              timer_init();   
+  69   1              status = 0;
+  70   1              while(1)
+  71   1              {
+  72   2                 // 监听清零按钮
+  73   2                 if(!PIN_CLEAR)
+  74   2                 {
+  75   3                         status = 3;
+  76   3                         minutes = 0; // 分钟
+  77   3                         seconds = 0; // 秒种
+  78   3                         percent_second = 0; // 百分秒
+  79   3                         PIN_BEE = 1;
+  80   3                         TR1=0;         //关闭/启动定时器1    
+  81   3                         TH1=(65536-9216)/256;            //装初值,10毫秒   10000*11.0592/12  = 9216
+  82   3                         TL1=(65536-9216)%256;
+  83   3                 }
+  84   2      
+  85   2      
+  86   2                 // 监听声音控制按钮
+  87   2                 if(!PIN_BEE_BTN)
+  88   2                 {                                             
+  89   3                       sound = 1;                                                                                              
+  90   3                                 
+  91   3                 }else{
+  92   3                              
+  93   3                       sound = 0;
+  94   3                 }
+  95   2      
+  96   2                 wc51r(0x81);         //写入显示缓冲区起始地址为第1行第2列
+  97   2                 showText("S:");
+  98   2                 showText(status_text[status]);
+  99   2                 showText(" VU:");      
+ 100   2                 showText(sound_text[sound]);
+ 101   2      
+ 102   2                 wc51r(0xc1);         //写入显示缓冲区起始地址为第2行第2列      
+ 103   2                 showText("TIME:");      
+ 104   2                 switchAndshow(minutes);
+ 105   2                 showText(":");          
+ 106   2                 switchAndshow(seconds);
+ 107   2                 showText(".");          
+ 108   2                 switchAndshow(percent_second);
+ 109   2      
+ 110   2                 PIN_LED = flag; // 呼吸灯
+ 111   2              }
+ 112   1      }
+ 113          
+ 114          // 外部中断0 开始计时
+ 115          void int_0(void) interrupt 0
+ 116          {       
+ 117   1         status = 1; 
+C51 COMPILER V9.01   TIME01                                                                06/19/2019 12:17:55 PAGE 3   
+
+ 118   1         TR1 = 1;       //关闭/启动定时器1 
+ 119   1      }
+ 120          
+ 121          // 外部中断1 暂停计时
+ 122          void int_1(void) interrupt 2
+ 123          {       
+ 124   1         status = 2;
+ 125   1         PIN_BEE = 1;
+ 126   1         TR1 = 0;       //关闭/启动定时器1  
+ 127   1      }
+ 128          
+ 129          // //定时器0 
+ 130          void T1_time()interrupt 3                                 
+ 131          {
+ 132   1         TH1=(65536-9216)/256;            //装初值,10毫秒   10000*11.0592/12  = 9216
+ 133   1         TL1=(65536-9216)%256;
+ 134   1      
+ 135   1         num++;                //num每加1此判断是否到100次
+ 136   1         percent_second++;
+ 137   1         if(num==100)          //如果到了100次，说明1秒时间到
+ 138   1         {
+ 139   2               percent_second = 0;
+ 140   2           seconds++; // 秒钟++
+ 141   2               
+ 142   2               if(sound == 1)
+ 143   2               {
+ 144   3                 PIN_BEE = flag; // 提示音
+ 145   3               
+ 146   3               }else{
+ 147   3      
+ 148   3                  PIN_BEE = 1;
+ 149   3               }
+ 150   2                                
+ 151   2               if(seconds == 60)
+ 152   2               {
+ 153   3                 seconds = 0;
+ 154   3                 minutes++; // 分钟++ 
+ 155   3               }
+ 156   2           num = 0;                                           //然后把num清零重新再计100次
+ 157   2               flag = !flag;           //让发光二极管状态取反  
+ 158   2         }            
+ 159   1      } 
+ 160          
+ 161          
+ 162          
+ 163          // 数据转换函数-两位显示计数值
+ 164          void switchAndshow(int num)
+ 165          {               
+ 166   1              // 00                                           
+ 167   1              int shi = num / 10 ; 
+ 168   1              int ge = num % 10;                                                                        
+ 169   1              wc51ddr(shi + 48);              
+ 170   1          wc51ddr(ge + 48);                                   
+ 171   1      }
+ 172          
+ 173          // 显示文字
+ 174          void showText(char *str)
+ 175          {
+ 176   1       while(*str)
+ 177   1       {
+ 178   2              char cur = *str;
+ 179   2              str++;
+C51 COMPILER V9.01   TIME01                                                                06/19/2019 12:17:55 PAGE 4   
+
+ 180   2              wc51ddr(cur);    
+ 181   2       }
+ 182   1      }
+ 183          
+ 184          //检查忙函数
+ 185          void  fbusy()
+ 186          {
+ 187   1              P2=0Xff;RS=0;RW=1;
+ 188   1              E=0; E=1;
+ 189   1              while (P2&0x80){E=0;E=1;}      //忙,等待
+ 190   1      }
+ 191          
+ 192          
+ 193          //写命令函数
+ 194          void  wc51r(uchar  j)
+ 195          {
+ 196   1              fbusy();
+ 197   1              E=0;RS=0;RW=0;
+ 198   1              E=1;
+ 199   1              P2=j;
+ 200   1              E=0;
+ 201   1      }
+ 202          
+ 203          //写数据函数
+ 204          void  wc51ddr(uchar  j)
+ 205          {
+ 206   1              fbusy();
+ 207   1              E=0;RS=1;RW=0;
+ 208   1              E=1;
+ 209   1              P2=j;
+ 210   1              E=0;
+ 211   1      }
+ 212          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    499    ----
+   CONSTANT SIZE    =     50    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     32       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
